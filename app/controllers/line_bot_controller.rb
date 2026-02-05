@@ -41,16 +41,16 @@ class LineBotController < ApplicationController
     }
     response = LINE_CLIENT.push_message(user_id, message)
 
-    if response.code != 200
+    if response.code != "200"
         Rails.logger.error("錯誤訊息: #{response.body}")
     end
   end
 
   def start_test(user_id)
     questions = Question.order(:id)
- 
+
     return reply_message(user_id, '目前尚無心理測驗') if Question.none?
- 
+
     result = Result.create(user_id: , answers: {})
     send_question_to_user(user_id, questions.first, result)
   end
@@ -63,12 +63,12 @@ class LineBotController < ApplicationController
         type: 'buttons',
         text: question.title,
         actions: [
-          { 
+          {
             type: 'postback',
             label: question.option_1,
-            data: "question_id=#{question.id}&answer=#{question.value_1}&result_id=#{result.id}" 
+            data: "question_id=#{question.id}&answer=#{question.value_1}&result_id=#{result.id}"
           },
-          { 
+          {
             type: 'postback',
             label: question.option_2,
             data: "question_id=#{question.id}&answer=#{question.value_2}&result_id=#{result.id}"
@@ -79,7 +79,7 @@ class LineBotController < ApplicationController
 
     response = LINE_CLIENT.push_message(user_id, message)
 
-    if response.code != 200
+    if response.code != "200"
         Rails.logger.error("錯誤訊息: #{response.body}")
     end
   end
@@ -91,10 +91,10 @@ class LineBotController < ApplicationController
     result = Result.find(data['result_id'])
     question_id = data['question_id']
     answer = data['answer']
- 
+
     result.answers[question_id] = answer
     result.save
- 
+
     next_question = Question.where('id > ?', question_id).order(:id).first
 
     if next_question.present?

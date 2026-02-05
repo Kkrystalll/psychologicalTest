@@ -1,0 +1,13 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Ruby on Rails
+  API conventions: RESTful, JSON responses
+rules:
+  proposal:
+    - Include rollback plan
+    - Keep proposals under 500 words
+  specs:
+    - Use Given/When/Then format for scenarios
+  tasks:
+    - Break tasks into chunks of max 2 hours

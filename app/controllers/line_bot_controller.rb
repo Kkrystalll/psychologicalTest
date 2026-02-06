@@ -47,12 +47,28 @@ class LineBotController < ApplicationController
   end
 
   def start_test(user_id)
-    questions = Question.order(:id)
+    # 取得所有有題目的分類
+    categories = Category.joins(:questions).distinct.order(:order)
 
-    return reply_message(user_id, '目前尚無心理測驗') if Question.none?
+    return reply_message(user_id, '目前尚無心理測驗') if categories.empty?
 
-    result = Result.create(user_id: , answers: {})
-    send_question_to_user(user_id, questions.first, result)
+    # 從每個分類隨機抽一題，產生題目序列
+    question_sequence = categories.map { |cat| cat.questions.sample.id }
+
+    # 打亂題目順序
+    question_sequence.shuffle!
+
+    # 建立 result 並儲存 question_sequence 和 current_index
+    result = Result.create(
+      user_id: user_id,
+      answers: {},
+      question_sequence: question_sequence,
+      current_index: 0
+    )
+
+    # 發送第一題
+    first_question = Question.find(question_sequence[0])
+    send_question_to_user(user_id, first_question, result)
   end
 
   def send_question_to_user(user_id, question, result)
@@ -89,18 +105,29 @@ class LineBotController < ApplicationController
     # 解析 URL 查詢字串，並轉換為雜湊（Hash）物件
 
     result = Result.find(data['result_id'])
-    question_id = data['question_id']
+    question_id = data['question_id'].to_i
     answer = data['answer']
 
-    result.answers[question_id] = answer
+    # 以 category_id 為 key 儲存答案
+    question = Question.find(question_id)
+    result.answers[question.category_id.to_s] = answer
+
+    # 更新 current_index
+    result.current_index += 1
     result.save
 
-    next_question = Question.where('id > ?', question_id).order(:id).first
-
-    if next_question.present?
+    # 用 question_sequence 和 current_index 判斷下一題
+    if result.current_index < result.question_sequence.length
+      next_question_id = result.question_sequence[result.current_index]
+      next_question = Question.find(next_question_id)
       send_question_to_user(event['source']['userId'], next_question, result)
     else
-      reply_message(event['source']['userId'], "您的測驗結果是#{result.answers.values.join}")
+      # 結果顯示改為按分類 order 排序答案後串接
+      sorted_answers = Category.order(:order).map do |cat|
+        result.answers[cat.id.to_s]
+      end.compact.join
+
+      reply_message(event['source']['userId'], "您的測驗結果是#{sorted_answers}")
     end
   end
 end

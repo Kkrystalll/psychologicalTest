@@ -28,4 +28,4 @@
 - **Models**: 新增 `Category` model，修改 `Question`、`Result` model
 - **Controllers**: 修改 `LineBotController` 的 `start_test` 和 `handle_postback`
 - **Database**: 新增 migration 建立 `categories` 表、修改 `questions` 和 `results` 表
-- **Rollback**: 若需回滾，移除 `categories` 表、移除 `questions.category_id`、移除 `results` 的新欄位，恢復原本的出題與顯示邏輯
+- **Rollback**: 若需回滾，移除 `categories` 表、移除 `questions.category_id`、移除 `results` 的新欄位，恢復原本的出題與顯示邏輯。
